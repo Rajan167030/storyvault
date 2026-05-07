@@ -1,0 +1,91 @@
+:root {
+  color: #f6f2ea;
+  background: #0c0f14;
+  font-family:
+    'Trebuchet MS',
+    'Lucida Sans Unicode',
+    'Lucida Grande',
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --page-bg: #0c0f14;
+  --page-bg-2: #111621;
+  --panel: rgba(17, 22, 33, 0.84);
+  --panel-strong: rgba(20, 26, 39, 0.94);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text: #f6f2ea;
+  --muted: #aeb6c6;
+  --accent: #ff7a18;
+  --accent-2: #ffd166;
+  --accent-soft: rgba(255, 122, 24, 0.18);
+  --success: #45d483;
+  --danger: #ff6b6b;
+  --info: #58c7ff;
+  --shadow: 0 24px 90px rgba(0, 0, 0, 0.34);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(255, 122, 24, 0.16), transparent 35%),
+    radial-gradient(circle at 85% 10%, rgba(88, 199, 255, 0.14), transparent 28%),
+    linear-gradient(160deg, var(--page-bg), var(--page-bg-2));
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255, 209, 102, 0.09), transparent 24%),
+    radial-gradient(circle at 80% 20%, rgba(255, 122, 24, 0.14), transparent 30%),
+    linear-gradient(160deg, var(--page-bg), #0f141d 48%, #0b0d12);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent 92%);
+  opacity: 0.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}

@@ -1,8 +1,6 @@
 import User from "../models/user.model.js";
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import generateToken from "../utils/genratetoken.js";
-import { protect } from "../middleware/user.middleware.js";
 export const register = async (req , res)=> {
     try {
         const {username , email , password} = req.body;
@@ -49,9 +47,10 @@ export const bookmarkStory = async (req , res)=>{
             return res.status(400).json({message : "storyId is required "});
         }
         const user = req.user;
-        if(user.bookmarkedStories.includes(storyId)){
-             user.bookmarkedStories = user.bookmarkedStories.filter(id => id.toString() === storyId);
-             await user.save();
+        const isBookmarked = user.bookmarkedStories.some(id => id.toString() === storyId);
+        if(isBookmarked){
+            user.bookmarkedStories = user.bookmarkedStories.filter(id => id.toString() !== storyId);
+            await user.save();
             return res.status(200).json({message : "bookmarked Story removed successfully"});
         } 
         else{
@@ -61,7 +60,31 @@ export const bookmarkStory = async (req , res)=>{
 
         }
         
-    } catch (error) {
+    } catch (error){
         return res.status(500).json({message : "Internal serevr error"});
     }
 }
+
+export const getBookmarkedStories = async (req , res)=>{
+    try {
+        const user = await req.user.populate('bookmarkedStories');
+        const bookmarkedStories = user.bookmarkedStories;
+        return res.json({message : "Bookmarked stories retrieved successfully" , bookmarkedStories});
+    } catch (error){
+        return res.status(500).json({message : "Internal server error"});
+    }
+}
+
+export const logout = async (req, res) => {
+    try {
+        res.clearCookie('jwt', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+
+        return res.json({ message: 'Logout successful' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};

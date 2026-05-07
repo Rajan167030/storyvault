@@ -7,7 +7,7 @@ import { protect } from '../middleware/user.middleware.js';
     return data;
 }
 
- export const scrapeStories = async (req , res)=>{
+export const scrapeStories = async (req , res)=>{
 
     try {
         const html = await getHtml('https://news.ycombinator.com/');
@@ -21,11 +21,27 @@ import { protect } from '../middleware/user.middleware.js';
             const postedAt = $(element).next().find('.age').text();
             stories.push({title , URL , points , author , postedAt});
         });
-        await Story.deleteMany();
-       await Story.insertMany(stories);
-        return res.json({message : "Stories scraped and saved to database successfully!" , stories}) ;
+        const savedStories = await Promise.all(
+            stories.map((story) =>
+                Story.findOneAndUpdate(
+                    { URL: story.URL },
+                    { $set: story },
+                    { upsert: true, new: true, setDefaultsOnInsert: true }
+                )
+            )
+        );
+        const payload = {message : "Stories scraped and saved to database successfully!" , stories : savedStories};
+        if (res) {
+            return res.json(payload);
+        }
+
+        return payload;
     } catch (error) {
-        return res.status(500).json({message : "Error scraping stories"})
+        if (res) {
+            return res.status(500).json({message : "Error scraping stories"});
+        }
+
+        throw error;
     }
 
 
@@ -33,10 +49,9 @@ import { protect } from '../middleware/user.middleware.js';
 
 export const getStories = async (req , res)=>{
     try {
-        const stories = await Story.find();
+        const stories = await Story.find().sort({ updatedAt: -1, createdAt: -1 }).limit(100);
         return res.json({stories});
     } catch (error) {
         return res.status(500).json({message : "Error fetching stories"});
     }
 }
-
