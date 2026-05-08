@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { LayoutGrid, Bookmark, RotateCw, LogOut, Terminal, Sparkles, User, Mail, ShieldCheck } from 'lucide-react'
 import './App.css'
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '')
@@ -199,24 +201,33 @@ function SessionPanel({ user, savedStories, onLogout }) {
   return (
     <section className="session-panel">
       <div className="session-panel__top">
+        <div className="icon-badge">
+          <User size={20} />
+        </div>
         <div>
           <p className="section-kicker">Signed in</p>
           <h3>{user?.username || 'Reader'}</h3>
         </div>
 
-        <button type="button" className="ghost-button" onClick={onLogout}>
-          Logout
+        <button type="button" className="ghost-button icon-button" onClick={onLogout} title="Logout">
+          <LogOut size={18} />
         </button>
       </div>
 
       <div className="session-panel__details">
         <div className="session-stat">
-          <span>Saved</span>
-          <strong>{savedStories.length}</strong>
+          <div className="session-stat__icon"><Bookmark size={14} /></div>
+          <div>
+            <span>Saved</span>
+            <strong>{savedStories.length}</strong>
+          </div>
         </div>
         <div className="session-stat">
-          <span>Email</span>
-          <strong>{user?.email || 'n/a'}</strong>
+          <div className="session-stat__icon"><Mail size={14} /></div>
+          <div>
+            <span>Email</span>
+            <strong>{user?.email || 'n/a'}</strong>
+          </div>
         </div>
       </div>
 
@@ -224,6 +235,36 @@ function SessionPanel({ user, savedStories, onLogout }) {
         Bookmark any story from the feed. It will stay in your saved section until you remove it.
       </p>
     </section>
+  )
+}
+
+function Navigation() {
+  const location = useLocation()
+  
+  return (
+    <nav className="main-nav">
+      <Link 
+        to="/" 
+        className={`nav-link ${location.pathname === '/' ? 'is-active' : ''}`}
+      >
+        <LayoutGrid size={18} />
+        <span>Dashboard</span>
+      </Link>
+      <Link 
+        to="/stories" 
+        className={`nav-link ${location.pathname === '/stories' ? 'is-active' : ''}`}
+      >
+        <RotateCw size={18} />
+        <span>Stories</span>
+      </Link>
+      <Link 
+        to="/saved" 
+        className={`nav-link ${location.pathname === '/saved' ? 'is-active' : ''}`}
+      >
+        <Bookmark size={18} />
+        <span>Bookmarks</span>
+      </Link>
+    </nav>
   )
 }
 
@@ -457,195 +498,245 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <div className="ambient ambient--one" />
-      <div className="ambient ambient--two" />
+    <BrowserRouter>
+      <div className="app-shell">
+        <div className="ambient ambient--one" />
+        <div className="ambient ambient--two" />
 
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand__mark">SV</div>
-          <div>
-            <p className="section-kicker">Scraped story desk</p>
-            <h1>StoryVault</h1>
+        <header className="topbar">
+          <div className="brand">
+            <div className="brand__mark"><Terminal size={24} /></div>
+            <div>
+              <p className="section-kicker">Scraped story desk</p>
+              <h1>StoryVault</h1>
+            </div>
           </div>
-        </div>
 
-        <div className="topbar__actions">
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={handleScrapeStories}
-            disabled={scrapingStories || loadingStories}
-          >
-            {scrapingStories ? 'Syncing...' : 'Refresh stories'}
-          </button>
-          {isAuthenticated ? (
-            <button type="button" className="ghost-button ghost-button--danger" onClick={handleLogout}>
-              Logout
+          <Navigation />
+
+          <div className="topbar__actions">
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={handleScrapeStories}
+              disabled={scrapingStories || loadingStories}
+            >
+              {scrapingStories ? (
+                <>
+                  <RotateCw size={14} className="spin" />
+                  <span>Syncing...</span>
+                </>
+              ) : (
+                <>
+                  <RotateCw size={14} />
+                  <span>Refresh stories</span>
+                </>
+              )}
             </button>
-          ) : null}
-        </div>
-      </header>
-
-      <main className="layout">
-        <section className="hero-panel">
-          <div className="hero-panel__copy">
-            <p className="section-kicker">Hacker News mirror</p>
-            <h2>Log in, bookmark stories, and keep a curated reading list.</h2>
-            <p className="hero-panel__text">
-              The backend scrapes Hacker News into MongoDB. This frontend pulls that feed, lets users
-              create an account or sign in, and stores bookmarks in a dedicated saved section.
-            </p>
-
-            <div className="hero-panel__chips">
-              <span className="chip">Cookie auth</span>
-              <span className="chip">Scraped feed</span>
-              <span className="chip">Bookmark shelf</span>
-            </div>
-
-            <div className="hero-panel__stats">
-              <div className="stat-card">
-                <span>Stories</span>
-                <strong>{stories.length}</strong>
-              </div>
-              <div className="stat-card">
-                <span>Saved</span>
-                <strong>{savedStories.length}</strong>
-              </div>
-              <div className="stat-card">
-                <span>Session</span>
-                <strong>{isAuthenticated ? 'Active' : 'Guest'}</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="hero-panel__side">
-            <NoticeBanner notice={notice} />
-
             {isAuthenticated ? (
-              <SessionPanel user={user} savedStories={savedStories} onLogout={handleLogout} />
-            ) : (
-              <AuthPanel
-                mode={authMode}
-                form={authForm}
-                loading={authLoading}
-                error={authError}
-                onChange={handleAuthChange}
-                onSubmit={handleAuthSubmit}
-                onModeChange={handleAuthModeChange}
-                checkingSession={checkingSession}
-              />
-            )}
-          </div>
-        </section>
-
-        <section className="workspace">
-          <div className="panel">
-            <div className="panel__header">
-              <div>
-                <p className="section-kicker">Live feed</p>
-                <h3>Scraped stories</h3>
-              </div>
-
-              <span className="pill">{loadingStories ? 'Loading...' : `${stories.length} items`}</span>
-            </div>
-
-            {storiesError ? (
-              <div className="empty-state empty-state--error">
-                <p>{storiesError}</p>
-                <button type="button" className="primary-button primary-button--inline" onClick={loadStories}>
-                  Retry
-                </button>
-              </div>
+              <button type="button" className="ghost-button ghost-button--danger icon-button" onClick={handleLogout}>
+                <LogOut size={16} />
+              </button>
             ) : null}
+          </div>
+        </header>
 
-            {!storiesError && loadingStories ? (
-              <div className="story-list">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <article className="story-card story-card--skeleton" key={`skeleton-${index}`}>
-                    <div className="story-card__index" />
-                    <div className="story-card__body">
-                      <div className="skeleton skeleton--line skeleton--short" />
-                      <div className="skeleton skeleton--line skeleton--title" />
-                      <div className="skeleton skeleton--line skeleton--meta" />
+        <main>
+          <Routes>
+            <Route path="/" element={
+              <section className="hero-panel hero-panel--full">
+                <div className="hero-panel__copy">
+                  <p className="section-kicker">Hacker News mirror</p>
+                  <h2>Welcome to StoryVault</h2>
+                  <p className="hero-panel__text">
+                    The ultimate destination for your curated reading list. We scrape Hacker News 
+                    and store it in MongoDB, giving you a lightning-fast experience with bookmarking capabilities.
+                  </p>
+
+                  <div className="hero-panel__chips">
+                    <span className="chip"><ShieldCheck size={14} /> Cookie auth</span>
+                    <span className="chip"><Terminal size={14} /> Scraped feed</span>
+                    <span className="chip"><Sparkles size={14} /> Bookmark shelf</span>
+                  </div>
+
+                  <div className="hero-panel__stats">
+                    <div className="stat-card">
+                      <span>Stories</span>
+                      <strong>{stories.length}</strong>
                     </div>
-                    <div className="skeleton skeleton--button" />
-                  </article>
-                ))}
-              </div>
-            ) : null}
+                    <div className="stat-card">
+                      <span>Saved</span>
+                      <strong>{savedStories.length}</strong>
+                    </div>
+                    <div className="stat-card">
+                      <span>Session</span>
+                      <strong>{isAuthenticated ? 'Active' : 'Guest'}</strong>
+                    </div>
+                  </div>
 
-            {!storiesError && !loadingStories && stories.length === 0 ? (
-              <div className="empty-state">
-                <p>No stories are available yet. Use refresh to scrape the latest Hacker News items.</p>
-                <button type="button" className="primary-button primary-button--inline" onClick={handleScrapeStories}>
-                  Sync now
-                </button>
-              </div>
-            ) : null}
+                  <div className="hero-panel__actions">
+                    <Link to="/stories" className="primary-button">Browse Stories</Link>
+                    {!isAuthenticated && <button onClick={() => setAuthMode('register')} className="ghost-button">Create Account</button>}
+                  </div>
+                </div>
 
-            {!storiesError && !loadingStories && stories.length > 0 ? (
-              <div className="story-list">
-                {stories.map((story, index) => {
-                  const storyId = getStoryId(story)
-                  const saved = savedStoryIds.has(storyId)
+                <div className="hero-panel__side">
+                  <NoticeBanner notice={notice} />
 
-                  return (
-                    <StoryCard
-                      key={storyId || `${story.title}-${index}`}
-                      story={story}
-                      index={index}
-                      saved={saved}
-                      loading={bookmarkingId === storyId}
-                      onToggleBookmark={handleBookmarkToggle}
+                  {isAuthenticated ? (
+                    <SessionPanel user={user} savedStories={savedStories} onLogout={handleLogout} />
+                  ) : (
+                    <AuthPanel
+                      mode={authMode}
+                      form={authForm}
+                      loading={authLoading}
+                      error={authError}
+                      onChange={handleAuthChange}
+                      onSubmit={handleAuthSubmit}
+                      onModeChange={handleAuthModeChange}
+                      checkingSession={checkingSession}
                     />
-                  )
-                })}
-              </div>
-            ) : null}
-          </div>
+                  )}
+                </div>
+              </section>
+            } />
 
-          <aside className="panel">
-            <div className="panel__header">
-              <div>
-                <p className="section-kicker">Saved</p>
-                <h3>Bookmarked stories</h3>
-              </div>
+            <Route path="/stories" element={
+              <section className="workspace-solo">
+                <div className="panel">
+                  <div className="panel__header">
+                    <div>
+                      <p className="section-kicker">Live feed</p>
+                      <h3>Scraped stories</h3>
+                    </div>
 
-              <span className="pill">{savedStories.length}</span>
-            </div>
+                    <div className="panel__actions">
+                      <button
+                        type="button"
+                        className="ghost-button ghost-button--small"
+                        onClick={handleScrapeStories}
+                        disabled={scrapingStories || loadingStories}
+                      >
+                        {scrapingStories ? (
+                          <>
+                            <RotateCw size={12} className="spin" />
+                            <span>Syncing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <RotateCw size={12} />
+                            <span>Sync Now</span>
+                          </>
+                        )}
+                      </button>
+                      <span className="pill">{loadingStories ? 'Loading...' : `${stories.length} items`}</span>
+                    </div>
+                  </div>
 
-            {!isAuthenticated ? (
-              <div className="empty-state">
-                <p>Sign in to move stories into your saved section.</p>
-              </div>
-            ) : savedStories.length === 0 ? (
-              <div className="empty-state">
-                <p>Your bookmarks will appear here after you save a story from the feed.</p>
-              </div>
-            ) : (
-              <div className="story-list">
-                {savedStories.map((story, index) => {
-                  const storyId = getStoryId(story)
+                  {storiesError ? (
+                    <div className="empty-state empty-state--error">
+                      <p>{storiesError}</p>
+                      <button type="button" className="primary-button primary-button--inline" onClick={loadStories}>
+                        Retry
+                      </button>
+                    </div>
+                  ) : null}
 
-                  return (
-                    <StoryCard
-                      key={storyId || `${story.title}-saved-${index}`}
-                      story={story}
-                      index={index}
-                      saved
-                      variant="saved"
-                      loading={bookmarkingId === storyId}
-                      onToggleBookmark={handleBookmarkToggle}
-                    />
-                  )
-                })}
-              </div>
-            )}
-          </aside>
-        </section>
-      </main>
-    </div>
+                  {!storiesError && loadingStories ? (
+                    <div className="story-list">
+                      {Array.from({ length: 6 }).map((_, index) => (
+                        <article className="story-card story-card--skeleton" key={`skeleton-${index}`}>
+                          <div className="story-card__index" />
+                          <div className="story-card__body">
+                            <div className="skeleton skeleton--line skeleton--short" />
+                            <div className="skeleton skeleton--line skeleton--title" />
+                            <div className="skeleton skeleton--line skeleton--meta" />
+                          </div>
+                          <div className="skeleton skeleton--button" />
+                        </article>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {!storiesError && !loadingStories && stories.length === 0 ? (
+                    <div className="empty-state">
+                      <p>No stories are available yet. Use refresh to scrape the latest Hacker News items.</p>
+                      <button type="button" className="primary-button primary-button--inline" onClick={handleScrapeStories}>
+                        Sync now
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {!storiesError && !loadingStories && stories.length > 0 ? (
+                    <div className="story-list story-list--grid">
+                      {stories.map((story, index) => {
+                        const storyId = getStoryId(story)
+                        const saved = savedStoryIds.has(storyId)
+
+                        return (
+                          <StoryCard
+                            key={storyId || `${story.title}-${index}`}
+                            story={story}
+                            index={index}
+                            saved={saved}
+                            loading={bookmarkingId === storyId}
+                            onToggleBookmark={handleBookmarkToggle}
+                          />
+                        )
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            } />
+
+            <Route path="/saved" element={
+              <section className="workspace-solo">
+                <div className="panel">
+                  <div className="panel__header">
+                    <div>
+                      <p className="section-kicker">Saved</p>
+                      <h3>Your Bookmarks</h3>
+                    </div>
+
+                    <span className="pill">{savedStories.length} items</span>
+                  </div>
+
+                  {!isAuthenticated ? (
+                    <div className="empty-state">
+                      <p>Sign in to view your saved section.</p>
+                    </div>
+                  ) : savedStories.length === 0 ? (
+                    <div className="empty-state">
+                      <p>Your bookmarks will appear here after you save a story from the feed.</p>
+                      <Link to="/stories" className="primary-button primary-button--inline">Browse Stories</Link>
+                    </div>
+                  ) : (
+                    <div className="story-list story-list--grid">
+                      {savedStories.map((story, index) => {
+                        const storyId = getStoryId(story)
+
+                        return (
+                          <StoryCard
+                            key={storyId || `${story.title}-saved-${index}`}
+                            story={story}
+                            index={index}
+                            saved
+                            variant="saved"
+                            loading={bookmarkingId === storyId}
+                            onToggleBookmark={handleBookmarkToggle}
+                          />
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
+            } />
+          </Routes>
+        </main>
+      </div>
+    </BrowserRouter>
   )
 }
 
