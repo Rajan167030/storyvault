@@ -1,6 +1,15 @@
 # StoryVault 📰
 
-A full-stack web application that scrapes stories from [Hacker News](https://news.ycombinator.com/), stores them in MongoDB, and serves them through a clean, modern interface with authentication and bookmarking features.
+<img width="1905" height="861" alt="Screenshot 2026-05-08 194658" src="https://github.com/user-attachments/assets/7ef0ed4b-deff-47c9-8b45-b2dec2ca55ff" />
+
+
+<img width="1921" height="975" alt="Screenshot 2026-05-08 194732" src="https://github.com/user-attachments/assets/d996cb90-1323-4585-b0fa-8ba811be383d" />
+
+
+<img width="1918" height="967" alt="image" src="https://github.com/user-attachments/assets/7342436c-fd43-4b59-9cbf-d41f3bb3391c" />
+
+
+A full-stack web application that scrapes stories from [tech News](https://news.ycombinator.com/), stores them in MongoDB, and serves them through a clean, modern interface with authentication and bookmarking features.
 
 ---
 
