@@ -47,11 +47,24 @@ export const scrapeStories = async (req , res)=>{
 
 }
 
-export const getStories = async (req , res)=>{
+export const getStories = async (req, res) => {
     try {
-        const stories = await Story.find().sort({ updatedAt: -1, createdAt: -1 }).limit(100);
-        return res.json({stories});
+        const stories = await Story.find().sort({ points: -1, updatedAt: -1 }).limit(100);
+        return res.json({ stories });
     } catch (error) {
-        return res.status(500).json({message : "Error fetching stories"});
+        return res.status(500).json({ message: "Error fetching stories" });
     }
 }
+
+export const getStoryById = async (req, res) => {
+    try {
+        const story = await Story.findById(req.params.id);
+        if (!story) {
+            return res.status(404).json({ message: "Story not found" });
+        }
+        return res.json({ story });
+    } catch (error) {
+        return res.status(500).json({ message: "Error fetching story" });
+    }
+}
+

@@ -1,9 +1,12 @@
 import { Router } from "express";
 const router = Router();
-import { scrapeStories } from "../controller/story.controller.js";
-import { getStories } from "../controller/story.controller.js";
+import { getStories, getStoryById, scrapeStories } from "../controller/story.controller.js";
+import { bookmarkStory } from "../controller/auth.controller.js";
+import { protect } from "../middleware/user.middleware.js";
 
-router.get('/' , getStories);
-router.post('/scrape' , scrapeStories);
+router.get('/', getStories);
+router.get('/:id', getStoryById);
+router.post('/scrape', scrapeStories);
+router.post('/:storyId/bookmark', protect, bookmarkStory);
 
 export default router;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { LayoutGrid, Bookmark, RotateCw, LogOut, Terminal, Sparkles, User, Mail, ShieldCheck } from 'lucide-react'
 import './App.css'
+import { useAuth } from './context/AuthContext'
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '')
 
@@ -269,18 +270,26 @@ function Navigation() {
 }
 
 function App() {
+  const {
+    user,
+    isAuthenticated,
+    checkingSession,
+    authLoading,
+    authError,
+    login,
+    register,
+    logout,
+    loadSession,
+    setAuthError
+  } = useAuth()
+
   const [stories, setStories] = useState([])
   const [savedStories, setSavedStories] = useState([])
-  const [user, setUser] = useState(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loadingStories, setLoadingStories] = useState(true)
-  const [checkingSession, setCheckingSession] = useState(true)
-  const [authLoading, setAuthLoading] = useState(false)
   const [bookmarkingId, setBookmarkingId] = useState('')
   const [scrapingStories, setScrapingStories] = useState(false)
   const [authMode, setAuthMode] = useState('login')
   const [authForm, setAuthForm] = useState(emptyAuthForm)
-  const [authError, setAuthError] = useState('')
   const [storiesError, setStoriesError] = useState('')
   const [notice, setNotice] = useState(null)
 
@@ -303,45 +312,18 @@ function App() {
     }
   }, [])
 
-  const loadSession = useCallback(async ({ quiet = false } = {}) => {
-    if (!quiet) {
-      setCheckingSession(true)
-    }
-
-    try {
-      const data = await apiRequest('/api/auth/test')
-      const sessionUser = data?.user || null
-      const bookmarks = Array.isArray(sessionUser?.bookmarkedStories) ? sessionUser.bookmarkedStories : []
-
-      setUser(sessionUser)
-      setSavedStories(bookmarks)
-      setIsAuthenticated(Boolean(sessionUser))
-      return sessionUser
-    } catch (error) {
-      if (error.status !== 401) {
-        const message = error.message || 'Unable to load session'
-        setNotice({ tone: 'error', message })
-      }
-
-      setUser(null)
-      setSavedStories([])
-      setIsAuthenticated(false)
-      return null
-    } finally {
-      if (!quiet) {
-        setCheckingSession(false)
-      }
-    }
-  }, [])
+  useEffect(() => {
+    void loadStories()
+  }, [loadStories])
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadStories()
-      void loadSession()
-    }, 0)
-
-    return () => window.clearTimeout(timer)
-  }, [loadStories, loadSession])
+    // Keep saved stories in sync with user bookmarks
+    if (user?.bookmarkedStories) {
+      setSavedStories(user.bookmarkedStories)
+    } else {
+      setSavedStories([])
+    }
+  }, [user])
 
   const handleAuthChange = (event) => {
     const { name, value } = event.target
@@ -374,31 +356,11 @@ function App() {
       return
     }
 
-    setAuthLoading(true)
-
     try {
       if (authMode === 'register') {
-        await apiRequest('/api/auth/register', {
-          method: 'POST',
-          body: JSON.stringify({
-            username,
-            email,
-            password,
-          }),
-        })
-      }
-
-      await apiRequest('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      })
-
-      const sessionUser = await loadSession({ quiet: true })
-      if (!sessionUser) {
-        throw new Error('Signed in, but the session cookie was not established.')
+        await register(username, email, password)
+      } else {
+        await login(email, password)
       }
 
       setAuthMode('login')
@@ -411,9 +373,7 @@ function App() {
         message: authMode === 'register' ? 'Account created and signed in.' : 'Signed in successfully.',
       })
     } catch (error) {
-      setAuthError(error.message || 'Authentication failed')
-    } finally {
-      setAuthLoading(false)
+      // Auth error is handled by context
     }
   }
 
@@ -451,7 +411,7 @@ function App() {
     setBookmarkingId(storyId)
 
     try {
-      const data = await apiRequest(`/api/auth/bookmark/${storyId}`, {
+      const data = await apiRequest(`/api/stories/${storyId}/bookmark`, {
         method: 'POST',
       })
 
@@ -461,12 +421,6 @@ function App() {
       })
       await loadSession({ quiet: true })
     } catch (error) {
-      if (error.status === 401) {
-        setIsAuthenticated(false)
-        setUser(null)
-        setSavedStories([])
-      }
-
       setNotice({
         tone: 'error',
         message: error.message || 'Unable to update bookmark',
@@ -477,25 +431,16 @@ function App() {
   }
 
   const handleLogout = async () => {
-    try {
-      await apiRequest('/api/auth/logout', {
-        method: 'POST',
-      })
-    } catch {
-      // Clear local state even if the cookie-clearing request fails.
-    } finally {
-      setUser(null)
-      setSavedStories([])
-      setIsAuthenticated(false)
-      setAuthError('')
-      setAuthForm(emptyAuthForm)
-      setAuthMode('login')
-      setNotice({
-        tone: 'info',
-        message: 'Signed out.',
-      })
-    }
+    await logout()
+    setAuthError('')
+    setAuthForm(emptyAuthForm)
+    setAuthMode('login')
+    setNotice({
+      tone: 'info',
+      message: 'Signed out.',
+    })
   }
+
 
   return (
     <BrowserRouter>
